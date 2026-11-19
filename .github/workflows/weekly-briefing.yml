@@ -1,0 +1,27 @@
+name: Weekly pricing briefing
+
+on:
+  schedule:
+    - cron: "0 4 * * 0"   # every Sunday 04:00 UTC = 07:00 Saudi time
+  workflow_dispatch:       # lets you run it by hand for the demo
+
+permissions:
+  contents: write
+
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Run the agent and write the report
+        run: node scripts/weekly-briefing.js
+      - name: Save the report
+        run: |
+          git config user.name "scent-lab-agent"
+          git config user.email "scent-lab-agent@users.noreply.github.com"
+          git add reports
+          git commit -m "Weekly pricing briefing" || echo "No changes"
+          git push
