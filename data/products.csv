@@ -1,0 +1,17 @@
+product_id,name,brand,gender,tier,current_price,stock_on_hand
+P01,Libre Eau de Parfum,Yves Saint Laurent,Women,Mid,450,22
+P02,La Vie Est Belle Eau de Parfum,Lancôme,Women,Mid,455,30
+P03,Good Girl Eau de Parfum,Carolina Herrera,Women,Mid,530,18
+P04,Bloom Eau de Parfum,Gucci,Women,Mid,540,25
+P05,Paradoxe Eau de Parfum,Prada,Women,Mid,460,20
+P06,L'Instant de Guerlain Eau de Parfum,Guerlain,Women,Mid,420,40
+P07,Sauvage Eau de Parfum,Dior,Men,Mid,535,6
+P08,Bleu de Chanel Eau de Parfum,Chanel,Men,Mid,560,15
+P09,Acqua di Giò,Armani,Men,Mid,410,24
+P10,1 Million Eau de Toilette,Rabanne,Men,Mid,390,28
+P11,Eros Eau de Parfum,Versace,Men,Mid,420,0
+P12,Black Orchid Eau de Parfum,Tom Ford,Unisex,Luxury,690,14
+P13,Wood Sage & Sea Salt Cologne,Jo Malone London,Unisex,Luxury,899,35
+P14,Vanilla 28 Eau de Parfum,Kayali,Unisex,Luxury,560,30
+P15,Born in Roma Donna Eau de Parfum,Valentino,Unisex,Mid,520,20
+P16,Baccarat Rouge 540 Eau de Parfum,Maison Francis Kurkdjian,Unisex,Luxury,1290,4
