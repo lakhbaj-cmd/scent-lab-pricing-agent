@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scent Lab Pricing Agent</title>
+<meta name="description" content="A decision agent that recommends perfume prices and offers for Scent Lab, with what-if analysis and owner approval.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">SL</span>
+    <div>
+      <h1>Scent Lab</h1>
+      <p class="sub">Pricing Decision Agent · BAIS 400</p>
+    </div>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="dashboard">Dashboard</button>
+    <button class="tab" data-tab="products">Products</button>
+    <button class="tab" data-tab="agent">Run agent</button>
+    <button class="tab" data-tab="whatif">What-if</button>
+    <button class="tab" data-tab="briefing">Weekly briefing</button>
+    <button class="tab" data-tab="log">Decision log</button>
+    <button class="tab" data-tab="about">How it works</button>
+  </nav>
+</header>
+
+<main>
+  <!-- DASHBOARD -->
+  <section id="dashboard" class="panel active">
+    <div class="head">
+      <h2>How is Scent Lab doing, and which prices need attention?</h2>
+      <p class="muted">Last 4 weeks (25 Oct – 21 Nov 2026). Sales and stock are simulated; competitor prices are real (checked 19 Nov 2026).</p>
+    </div>
+    <div class="kpis" id="kpis"></div>
+    <div class="grid2">
+      <div class="card">
+        <h3>Weekly revenue (SAR)</h3>
+        <div id="trend"></div>
+      </div>
+      <div class="card">
+        <h3>Needs attention</h3>
+        <ul class="attention" id="attention"></ul>
+        <button class="btn primary" data-goto="agent">Run the agent →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRODUCTS -->
+  <section id="products" class="panel">
+    <div class="head">
+      <h2>Products and competitor prices</h2>
+      <p class="muted">16 perfumes. “—” means the competitor does not sell a comparable bottle. Green = cheapest in the market.</p>
+    </div>
+    <div class="filters">
+      <label>Show <select id="fGender"><option>All</option><option>Women</option><option>Men</option><option>Unisex</option></select></label>
+      <label>Tier <select id="fTier"><option>All</option><option>Mid</option><option>Luxury</option></select></label>
+    </div>
+    <div class="tablewrap"><table id="ptable"></table></div>
+  </section>
+
+  <!-- AGENT -->
+  <section id="agent" class="panel">
+    <div class="head">
+      <h2>Run the pricing agent</h2>
+      <p class="muted">The agent reads the data, lists the options, picks one using the rules, and drafts the new price. <b>Nothing changes until you approve.</b></p>
+    </div>
+    <div class="row">
+      <button class="btn primary big" id="runBtn">▶ Run the agent</button>
+      <span class="muted" id="runInfo"></span>
+    </div>
+    <div class="summary" id="runSummary"></div>
+    <div id="recs"></div>
+  </section>
+
+  <!-- WHAT-IF -->
+  <section id="whatif" class="panel">
+    <div class="head">
+      <h2>What-if analysis</h2>
+      <p class="muted">Change one assumption, the agent re-runs, and you see expected profit for the next 4 weeks: keeping today's prices vs following the agent. Every answer shows worst, most likely and best case.</p>
+    </div>
+    <div class="scenarios" id="scenarioPick">
+      <button class="sc active" data-sc="comp">Competitor drops price</button>
+      <button class="sc" data-sc="cost">Cost goes up</button>
+      <button class="sc" data-sc="season">Season (Ramadan / Eid / National Day)</button>
+      <button class="sc" data-sc="margin">Change my margin</button>
+      <button class="sc" data-sc="goal">Goal seek</button>
+    </div>
+    <div class="card inputs" id="scInputs"></div>
+    <div id="scOut"></div>
+  </section>
+
+  <!-- BRIEFING -->
+  <section id="briefing" class="panel">
+    <div class="head">
+      <h2>Weekly briefing</h2>
+      <p class="muted">Level 1 automation: every Sunday at 7:00 a scheduled job runs the agent and writes this report. It only reports. It never changes a price.</p>
+    </div>
+    <div class="card briefing" id="brief"></div>
+  </section>
+
+  <!-- LOG -->
+  <section id="log" class="panel">
+    <div class="head">
+      <h2>Decision log</h2>
+      <p class="muted">Every recommendation you approve or reject is saved here, so the owner stays accountable. Saved in this browser only.</p>
+    </div>
+    <div class="row"><button class="btn" id="resetBtn">Reset demo (restore original prices)</button></div>
+    <div class="tablewrap"><table id="ltable"></table></div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about" class="panel">
+    <div class="head"><h2>How the agent decides</h2></div>
+    <div class="grid2">
+      <div class="card">
+        <h3>The decision</h3>
+        <p><b>What price, or offer, should each perfume have this week?</b></p>
+        <p><b>Decision variables:</b> selling price per perfume, and offer % for slow movers.</p>
+        <p><b>Principle of choice:</b> stay competitive with Golden Scent, Faces and Sephora while never going below the minimum margin (20% mid-range, 30% luxury).</p>
+        <p><b>Type:</b> semistructured. The agent recommends, the owner approves.</p>
+      </div>
+      <div class="card">
+        <h3>The rules (checked in this order)</h3>
+        <p><b>First, a data check:</b> if the data contradicts itself (for example stock is 0 but bottles were sold), do nothing and ask the owner to check.</p>
+        <ol class="rules">
+          <li><b>Protect the margin:</b> if the cost went up and the price is below the minimum, raise to the minimum price.</li>
+          <li><b>High demand, low stock:</b> under 14 days of stock and sales steady or rising → raise 5%.</li>
+          <li><b>Slow mover:</b> more than 60 days of stock → 10% offer; more than 90 days → 15% offer. Never below the minimum price.</li>
+          <li><b>Competitor is cheaper:</b> match the cheapest competitor, but never go below the minimum price.</li>
+          <li>Otherwise keep the price.</li>
+        </ol>
+        <p class="muted">Minimum price = cost ÷ (1 − minimum margin). Any change over 15% is flagged for owner review.</p>
+      </div>
+      <div class="card">
+        <h3>Four parts of the system</h3>
+        <ul>
+          <li><b>Data:</b> products, weekly sales, costs, competitor prices (<a href="data/data_dictionary.md">data dictionary</a> and CSV files in the <code>data</code> folder).</li>
+          <li><b>Models:</b> minimum price, days of stock, profit forecast, what-if and goal seek.</li>
+          <li><b>Knowledge:</b> the pricing rules above (agent.js).</li>
+          <li><b>Interface:</b> this website and the weekly briefing.</li>
+          <li><b>User:</b> the owner of Scent Lab, who approves every change.</li>
+        </ul>
+      </div>
+      <div class="card warn">
+        <h3>When not to trust me</h3>
+        <ul>
+          <li>Competitor prices are a snapshot from 19 Nov 2026, and bottle sizes may differ between sites. A competitor sale can end tomorrow.</li>
+          <li>Sales, stock and costs are simulated, not from a real shop.</li>
+          <li>The profit forecast uses assumptions (price sensitivity 1.2, competitor sensitivity 3). Real customers may react differently.</li>
+          <li>I do not know about brand rules, supplier deals, or events I was not told about.</li>
+          <li>If a change is flagged “Owner review”, or confidence is Low, check it yourself before approving.</li>
+          <li>I never change a price on my own. A person always decides.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="foot">Scent Lab is a fictional shop made for a BAIS 400 course project. Not affiliated with any brand or retailer.</footer>
+
+<script src="data.js"></script>
+<script src="agent.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
