@@ -77,7 +77,7 @@ function analyseProduct(p, settings) {
   ];
   const checks = [];
   if (missing.length && known.length) checks.push(`${missing.join(" & ")} ${missing.length > 1 ? "do" : "does"} not sell a comparable bottle, so the comparison uses ${known.length} site${known.length > 1 ? "s" : ""} only.`);
-  checks.push("Competitor prices are the listed starting price on 19 Nov 2026; bottle sizes may differ. Re-check before a big change.");
+  checks.push(`Competitor prices are the listed starting price from the check on ${p.compDate || "19 Nov 2026"}; bottle sizes may differ. Re-check before a big change.`);
 
   // ---- 2. Design: list realistic options with their expected 4-week profit
   const opts = [];

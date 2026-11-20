@@ -8,15 +8,51 @@
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
   // ---------- state (saved in this browser only) ----------
-  let saved = { prices: {}, log: [], comp: {}, meta: {} };
+  let saved = { prices: {}, log: [], comp: {}, meta: {}, check: null };
   try { const raw = localStorage.getItem(KEY); if (raw) saved = Object.assign(saved, JSON.parse(raw)); } catch (e) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {} };
+  const niceDate = d => new Date(d + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
   const products = () => ORIGINAL.map(p => Object.assign({}, p, {
     basePrice: p.price,
     price: saved.prices[p.id] != null ? saved.prices[p.id] : p.price,
-    compRef: p.comp,                                       // prices when the sales history happened
-    comp: Object.assign({}, p.comp, (saved.comp || {})[p.id] || {})  // prices you updated by hand
+    compRef: p.comp,                                                   // prices when the sales history happened
+    comp: Object.assign({}, p.comp,
+      saved.check ? saved.check.prices[p.id] : {},                     // latest price check the agent ran
+      (saved.comp || {})[p.id] || {}),                                 // prices typed in by hand
+    compDate: niceDate(saved.check ? saved.check.date : "2026-11-19")
   }));
+
+  // ---------- competitor price check ----------
+  const CK_LABEL = () => `Last checked: ${niceDate(saved.check ? saved.check.date : "2026-11-19")}`;
+  function paintCheckLabels() { document.querySelectorAll(".ckLast").forEach(e => (e.textContent = CK_LABEL())); }
+  async function checkPrices(outSel) {
+    const out = $(outSel);
+    out.innerHTML = `<div class="answer">Checking Golden Scent, Faces and Sephora…</div>`;
+    let data;
+    try { data = await (await fetch("price_checks.json?t=" + Date.now(), { cache: "no-store" })).json(); }
+    catch (e) { out.innerHTML = `<div class="answer">Could not reach the price data right now. The agent keeps using the prices from the last check. Try again in a minute.</div>`; return; }
+    const latest = data.checks[data.checks.length - 1];
+    const before = products();
+    const changes = [];
+    before.forEach(p => ["Golden Scent", "Faces", "Sephora"].forEach(c => {
+      const o = p.comp[c], n = latest.prices[p.id] ? latest.prices[p.id][c] : null;
+      if (o !== n) changes.push({ name: p.name, c, o, n });
+    }));
+    saved.check = latest; saved.comp = {}; save(); paintCheckLabels();
+    const fmtP = v => v == null ? "not sold" : v + " SAR";
+    const rows = changes.map(x => {
+      const pct = x.o != null && x.n != null ? Math.round((x.n - x.o) / x.o * 100) : null;
+      return `<tr><td><b>${esc(x.name)}</b></td><td>${x.c}</td><td class="num">${fmtP(x.o)}</td><td class="num"><b>${fmtP(x.n)}</b></td>
+        <td class="num ${pct == null ? "" : pct < 0 ? "down" : "up"}">${pct == null ? "—" : (pct > 0 ? "+" : "") + pct + "%"}</td></tr>`;
+    }).join("");
+    out.innerHTML = `<div class="answer"><b>Price check done</b> (prices from ${niceDate(latest.date)}, 16 perfumes × 3 sites).
+      ${changes.length ? `<b>${changes.length}</b> competitor price${changes.length > 1 ? "s" : ""} changed.` : "No competitor changed a price since the last check."}</div>
+      ${changes.length ? `<div class="tablewrap" style="margin-bottom:12px"><table><tr><th>Perfume</th><th>Competitor</th><th class="num">Before</th><th class="num">Now</th><th class="num">Change</th></tr>${rows}</table></div>` : ""}
+      <button class="btn primary ckRun">▶ Run the agent with these prices</button>`;
+    out.querySelector(".ckRun").addEventListener("click", () => { show("agent"); runAndRender(); });
+    if ($("#products").classList.contains("active")) renderProducts();
+  }
+  document.querySelectorAll("[data-check]").forEach(b => b.addEventListener("click", () => checkPrices(b.dataset.check)));
 
   // ---------- tabs ----------
   function show(tab) {
@@ -116,7 +152,7 @@
     $("#cMsg").textContent = `Saved: ${c} now ${n === null ? "does not sell it" : "sells it for " + n + " SAR"}. Run the agent again to see its new advice.`;
     renderProducts();
   });
-  $("#cUndo").addEventListener("click", () => { saved.comp = {}; save(); showCurrent(); renderProducts(); $("#cMsg").textContent = "Competitor prices are back to the real prices checked on 19 Nov 2026."; });
+  $("#cUndo").addEventListener("click", () => { saved.comp = {}; save(); showCurrent(); renderProducts(); $("#cMsg").textContent = "Your typed prices are removed. The agent uses the prices from the last price check again."; });
   $("#fGender").addEventListener("change", renderProducts);
   $("#fTier").addEventListener("change", renderProducts);
 
@@ -158,7 +194,7 @@
     const changes = currentRecs.filter(r => r.dataIssue || r.newPrice !== r.oldPrice);
     const keeps = currentRecs.filter(r => !r.dataIssue && r.newPrice === r.oldPrice);
     const count = a => currentRecs.filter(r => r.action === a && !r.dataIssue).length;
-    $("#runInfo").textContent = `Ran at ${new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} on ${currentRecs.length} perfumes.`;
+    $("#runInfo").textContent = `· Ran at ${new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })} on ${currentRecs.length} perfumes.`;
     const safe = changes.filter(r => !r.needsReview && !r.dataIssue);
     $("#runSummary").innerHTML = `<span class="chip">↑ Raise: ${count("raise")}</span><span class="chip">↓ Lower: ${count("lower")}</span>
       <span class="chip">% Offer: ${count("offer")}</span><span class="chip">= Keep: ${keeps.length}</span>
@@ -298,10 +334,11 @@
   }
   $("#resetBtn").addEventListener("click", () => {
     if (!confirm("Reset all approved prices and clear the log?")) return;
-    saved = { prices: {}, log: [], comp: {}, meta: {} }; save(); renderLog();
+    saved = { prices: {}, log: [], comp: {}, meta: {}, check: null }; save(); renderLog(); paintCheckLabels();
   });
 
   // ---------- start ----------
+  paintCheckLabels();
   renderDashboard();
   setScenario("comp");
 })();

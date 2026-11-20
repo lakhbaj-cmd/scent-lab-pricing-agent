@@ -1,0 +1,90 @@
+{
+ "note": "Competitor prices checked on the retailers' websites (listed starting price). Newest check last.",
+ "checks": [
+  {
+   "date": "2026-11-19",
+   "prices": {
+    "P01": {
+     "Golden Scent": null,
+     "Faces": 658,
+     "Sephora": 419
+    },
+    "P02": {
+     "Golden Scent": 399,
+     "Faces": 418.6,
+     "Sephora": 598
+    },
+    "P03": {
+     "Golden Scent": 535,
+     "Faces": 560,
+     "Sephora": 560
+    },
+    "P04": {
+     "Golden Scent": 279,
+     "Faces": 565,
+     "Sephora": 565
+    },
+    "P05": {
+     "Golden Scent": 489,
+     "Faces": 424,
+     "Sephora": 424
+    },
+    "P06": {
+     "Golden Scent": 409,
+     "Faces": 690,
+     "Sephora": null
+    },
+    "P07": {
+     "Golden Scent": 535,
+     "Faces": null,
+     "Sephora": 535
+    },
+    "P08": {
+     "Golden Scent": 540,
+     "Faces": 540,
+     "Sephora": 769
+    },
+    "P09": {
+     "Golden Scent": 489,
+     "Faces": 350,
+     "Sephora": null
+    },
+    "P10": {
+     "Golden Scent": 322,
+     "Faces": null,
+     "Sephora": 410
+    },
+    "P11": {
+     "Golden Scent": 333,
+     "Faces": 460,
+     "Sephora": null
+    },
+    "P12": {
+     "Golden Scent": 477,
+     "Faces": 690,
+     "Sephora": 690
+    },
+    "P13": {
+     "Golden Scent": 899,
+     "Faces": null,
+     "Sephora": null
+    },
+    "P14": {
+     "Golden Scent": 605,
+     "Faces": null,
+     "Sephora": 470
+    },
+    "P15": {
+     "Golden Scent": 457,
+     "Faces": 447.3,
+     "Sephora": 639
+    },
+    "P16": {
+     "Golden Scent": 944,
+     "Faces": null,
+     "Sephora": 1375
+    }
+   }
+  }
+ ]
+}
