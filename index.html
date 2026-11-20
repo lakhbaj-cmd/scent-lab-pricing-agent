@@ -26,6 +26,7 @@
     <button class="tab" data-tab="briefing">Weekly briefing</button>
     <button class="tab" data-tab="log">Decision log</button>
     <button class="tab" data-tab="about">How it works</button>
+    <a class="tab storelink" href="store.html">Open the store ↗</a>
   </nav>
 </header>
 
@@ -35,6 +36,16 @@
     <div class="head">
       <h2>How is Scent Lab doing, and which prices need attention?</h2>
       <p class="muted">Last 4 weeks (25 Oct – 21 Nov 2026). Sales and stock are simulated; competitor prices are real (checked 19 Nov 2026).</p>
+    </div>
+    <div class="card tryit">
+      <h3>Try it yourself (2 minutes)</h3>
+      <ol>
+        <li><b>Run agent</b> → read why it suggests each price → click <b>Approve</b> on a few.</li>
+        <li><b>Open the store</b> (top right) → the approved prices and offers are now live in the shop.</li>
+        <li><b>Products</b> → change a competitor price (for example Faces drops Good Girl to 450) → run the agent again and watch it react.</li>
+        <li><b>What-if</b> → try a season, a cost increase or a goal seek.</li>
+      </ol>
+      <p class="muted" style="margin:0">Your changes are saved only in your browser. <b>Decision log → Reset demo</b> puts everything back.</p>
     </div>
     <div class="kpis" id="kpis"></div>
     <div class="grid2">
@@ -61,6 +72,16 @@
       <label>Tier <select id="fTier"><option>All</option><option>Mid</option><option>Luxury</option></select></label>
     </div>
     <div class="tablewrap"><table id="ptable"></table></div>
+    <div class="card inputs" style="margin-top:16px">
+      <div style="flex-basis:100%"><h3 style="margin:0">Update a competitor price</h3>
+        <p class="muted" style="margin:.2rem 0 0">Saw a new price on a competitor's site? Type it here. The agent uses it the next time it runs.</p></div>
+      <label>Perfume<select id="cProd"></select></label>
+      <label>Competitor<select id="cComp"><option>Golden Scent</option><option>Faces</option><option>Sephora</option></select></label>
+      <label>New price (SAR)<input id="cPrice" type="number" min="1" step="1" style="width:130px"></label>
+      <button class="btn primary" id="cSave">Save price</button>
+      <button class="btn" id="cUndo">Back to real prices</button>
+      <span class="muted" id="cMsg" style="flex-basis:100%"></span>
+    </div>
   </section>
 
   <!-- AGENT -->

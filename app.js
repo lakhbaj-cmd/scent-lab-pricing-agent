@@ -8,10 +8,15 @@
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
   // ---------- state (saved in this browser only) ----------
-  let saved = { prices: {}, log: [] };
+  let saved = { prices: {}, log: [], comp: {}, meta: {} };
   try { const raw = localStorage.getItem(KEY); if (raw) saved = Object.assign(saved, JSON.parse(raw)); } catch (e) {}
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch (e) {} };
-  const products = () => ORIGINAL.map(p => Object.assign({}, p, { basePrice: p.price, price: saved.prices[p.id] != null ? saved.prices[p.id] : p.price }));
+  const products = () => ORIGINAL.map(p => Object.assign({}, p, {
+    basePrice: p.price,
+    price: saved.prices[p.id] != null ? saved.prices[p.id] : p.price,
+    compRef: p.comp,                                       // prices when the sales history happened
+    comp: Object.assign({}, p.comp, (saved.comp || {})[p.id] || {})  // prices you updated by hand
+  }));
 
   // ---------- tabs ----------
   function show(tab) {
@@ -94,6 +99,24 @@
     }).join("");
     $("#ptable").innerHTML = head + rows;
   }
+  // update a competitor price by hand (the agent "senses" it on the next run)
+  const compSel = $("#cProd");
+  compSel.innerHTML = ORIGINAL.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("");
+  const showCurrent = () => {
+    const p = products().find(x => x.id === compSel.value), c = $("#cComp").value;
+    $("#cPrice").value = p.comp[c] != null ? p.comp[c] : "";
+    $("#cPrice").placeholder = p.comp[c] != null ? "" : "not sold there";
+  };
+  compSel.addEventListener("change", showCurrent); $("#cComp").addEventListener("change", showCurrent); showCurrent();
+  $("#cSave").addEventListener("click", () => {
+    const id = compSel.value, c = $("#cComp").value, v = $("#cPrice").value.trim();
+    const n = v === "" ? null : Number(v);
+    if (n !== null && (!isFinite(n) || n <= 0)) { $("#cMsg").textContent = "Please type a price above 0, or leave it empty for “not sold”."; return; }
+    saved.comp = saved.comp || {}; saved.comp[id] = Object.assign({}, saved.comp[id], { [c]: n }); save();
+    $("#cMsg").textContent = `Saved: ${c} now ${n === null ? "does not sell it" : "sells it for " + n + " SAR"}. Run the agent again to see its new advice.`;
+    renderProducts();
+  });
+  $("#cUndo").addEventListener("click", () => { saved.comp = {}; save(); showCurrent(); renderProducts(); $("#cMsg").textContent = "Competitor prices are back to the real prices checked on 19 Nov 2026."; });
   $("#fGender").addEventListener("change", renderProducts);
   $("#fTier").addEventListener("change", renderProducts);
 
@@ -149,7 +172,7 @@
   function decide(id, ok) {
     const r = currentRecs.find(x => x.id === id);
     if (!r) return;
-    if (ok) saved.prices[id] = r.newPrice;
+    if (ok) { saved.prices[id] = r.newPrice; saved.meta = saved.meta || {}; saved.meta[id] = { action: r.action }; }
     saved.log.unshift({ t: new Date().toISOString(), id, name: r.name, old: r.oldPrice, nw: r.newPrice, rule: r.rule, ok });
     save();
     const card = document.getElementById("rec-" + id);
@@ -275,7 +298,7 @@
   }
   $("#resetBtn").addEventListener("click", () => {
     if (!confirm("Reset all approved prices and clear the log?")) return;
-    saved = { prices: {}, log: [] }; save(); renderLog();
+    saved = { prices: {}, log: [], comp: {}, meta: {} }; save(); renderLog();
   });
 
   // ---------- start ----------

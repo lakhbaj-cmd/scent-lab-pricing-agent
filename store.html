@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scent Lab Store</title>
+<meta name="description" content="Demo storefront for Scent Lab. Prices come from the pricing agent after the owner approves them.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .hero{background:var(--accent);color:var(--accent-ink);padding:34px 24px;text-align:center}
+  .hero h2{font-size:2rem}
+  .hero p{margin:.4rem 0 0;opacity:.85}
+  .demo{background:var(--warn-bg);color:var(--warn);text-align:center;font-size:.85rem;padding:8px 16px}
+  .shopbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+  .shopbar .sp{flex:1}
+  .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
+  .item{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);display:flex;flex-direction:column}
+  .pic{background:var(--surface2);height:180px;display:grid;place-items:center;position:relative}
+  .badge{position:absolute;top:10px;left:10px;font-size:.75rem;font-weight:600;padding:3px 10px;border-radius:999px}
+  .badge.offer{background:var(--bad);color:#fff}
+  .badge.new{background:var(--accent);color:var(--accent-ink)}
+  .info{padding:14px 16px 16px;display:flex;flex-direction:column;gap:2px;flex:1}
+  .ibrand{font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .iname{font-weight:600}
+  .imeta{font-size:.8rem;color:var(--muted)}
+  .iprice{margin-top:auto;padding-top:10px;font-family:Fraunces,serif;font-size:1.25rem;font-weight:600}
+  .iprice s{color:var(--muted);font-size:.95rem;font-weight:500;margin-left:6px}
+  .stock{font-size:.78rem}
+  .stock.low{color:var(--bad)} .stock.out{color:var(--bad);font-weight:600}
+  @media (max-width:1000px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  @media (max-width:720px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media (max-width:420px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand" style="justify-content:space-between;flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="logo" aria-hidden="true">SL</span>
+      <div><h1>Scent Lab</h1><p class="sub">Perfume store</p></div>
+    </div>
+    <a class="btn" href="index.html">← Back to the pricing agent</a>
+  </div>
+</header>
+<div class="demo">Demo store for a university project. Scent Lab is fictional; nothing here can be bought.</div>
+<section class="hero">
+  <h2>Fragrances for every mood</h2>
+  <p id="updated">Prices are set by the Scent Lab pricing agent and approved by the owner.</p>
+</section>
+<main>
+  <div class="shopbar">
+    <button class="sc active" data-g="All">All</button>
+    <button class="sc" data-g="Women">Women</button>
+    <button class="sc" data-g="Men">Men</button>
+    <button class="sc" data-g="Unisex">Unisex</button>
+    <span class="sp"></span>
+    <button class="sc" data-g="Offers">On offer</button>
+  </div>
+  <div class="grid" id="grid"></div>
+</main>
+<footer class="foot">Scent Lab is a fictional shop made for a BAIS 400 course project. Not affiliated with any brand or retailer.</footer>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  let saved = { prices: {}, meta: {}, log: [] };
+  try { const raw = localStorage.getItem("scentlab-demo-v1"); if (raw) saved = Object.assign(saved, JSON.parse(raw)); } catch (e) {}
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const tint = { Women: "#c98bb3", Men: "#6f86b5", Unisex: "#b8873b" };
+  const bottle = (p) => `<svg width="90" height="130" viewBox="0 0 90 130" aria-hidden="true">
+      <rect x="35" y="6" width="20" height="16" rx="3" fill="var(--ink)" opacity=".75"/>
+      <rect x="31" y="20" width="28" height="10" rx="2" fill="${tint[p.gender]}" opacity=".9"/>
+      <rect x="12" y="30" width="66" height="92" rx="14" fill="${tint[p.gender]}" opacity="${p.tier === "Luxury" ? ".95" : ".65"}"/>
+      <rect x="22" y="58" width="46" height="34" rx="4" fill="var(--surface)" opacity=".9"/>
+      <text x="45" y="80" text-anchor="middle" style="font:600 13px Fraunces,serif;fill:var(--ink)">${esc(p.brand.split(" ").map(w => w[0]).join("").slice(0, 3))}</text></svg>`;
+  const items = SCENT_DATA.products.map(p => {
+    const price = saved.prices[p.id] != null ? saved.prices[p.id] : p.price;
+    const action = (saved.meta || {})[p.id] ? saved.meta[p.id].action : null;
+    return Object.assign({}, p, { now: price, was: p.price, action });
+  });
+  if (saved.log && saved.log.length) {
+    const last = saved.log.find(e => e.ok);
+    if (last) document.getElementById("updated").textContent =
+      `Prices last updated by the pricing agent on ${new Date(last.t).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}, after owner approval.`;
+  }
+  function render(g) {
+    const list = items.filter(p => g === "All" ? true : g === "Offers" ? p.now < p.was : p.gender === g);
+    document.getElementById("grid").innerHTML = list.length ? list.map(p => {
+      const off = p.now < p.was ? Math.round((1 - p.now / p.was) * 100) : 0;
+      const badge = p.action === "offer" ? `<span class="badge offer">Offer −${off}%</span>`
+        : p.now !== p.was ? `<span class="badge new">New price</span>` : "";
+      const stock = p.stock === 0 ? `<span class="stock out">Out of stock</span>`
+        : p.stock <= 6 ? `<span class="stock low">Only ${p.stock} left</span>` : `<span class="stock muted">In stock</span>`;
+      return `<div class="item"><div class="pic">${badge}${bottle(p)}</div><div class="info">
+        <div class="ibrand">${esc(p.brand)}</div><div class="iname">${esc(p.name)}</div>
+        <div class="imeta">${p.gender} · ${p.tier === "Luxury" ? "Luxury" : "Classic"}</div>${stock}
+        <div class="iprice">${p.now} SAR${p.now < p.was ? `<s>${p.was} SAR</s>` : ""}</div></div></div>`;
+    }).join("") : `<p class="empty" style="grid-column:1/-1">No perfumes on offer yet. Approve an offer in the pricing agent first.</p>`;
+  }
+  document.querySelectorAll(".sc").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll(".sc").forEach(x => x.classList.toggle("active", x === b)); render(b.dataset.g);
+  }));
+  render("All");
+})();
+</script>
+</body>
+</html>

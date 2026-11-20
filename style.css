@@ -125,3 +125,8 @@ svg text{fill:var(--muted);font-size:11px;font-family:Inter,sans-serif}
   .price{text-align:left}
   h2{font-size:1.3rem}
 }
+
+.tab.storelink{text-decoration:none;margin-left:auto;color:var(--accent);font-weight:600}
+.tryit{margin-bottom:16px;background:var(--info-bg);border-color:transparent}
+.tryit ol{margin:.2rem 0 .6rem;padding-left:20px}
+.tryit li{margin-bottom:4px}
