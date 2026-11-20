@@ -103,8 +103,10 @@
   }));
   // Photos: images/P01.jpg (or .png / .webp). If there is no photo, the drawn bottle is shown.
   window.__imgFail = function (img) {
-    const exts = ["png", "webp"], step = +img.dataset.step;
-    if (step < exts.length) { img.dataset.step = step + 1; img.src = `images/${img.dataset.id}.${exts[step]}`; return; }
+    const id = img.dataset.id, names = [id, id.toLowerCase()], exts = ["jpg", "jpeg", "png", "webp", "avif"];
+    const tries = []; names.forEach(n => exts.forEach(e => tries.push(`images/${n}.${e}`)));
+    const step = +img.dataset.step + 1;   // try 0 (P01.jpg) already failed
+    if (step < tries.length) { img.dataset.step = step; img.src = tries[step]; return; }
     const fb = img.nextElementSibling; if (fb) fb.hidden = false; img.remove();
   };
   render("All");
