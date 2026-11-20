@@ -12,7 +12,7 @@
   .hero{background:var(--accent);color:var(--accent-ink);padding:34px 24px;text-align:center}
   .hero h2{font-size:2rem}
   .hero p{margin:.4rem 0 0;opacity:.85}
-  .demo{background:var(--warn-bg);color:var(--warn);text-align:center;font-size:.85rem;padding:8px 16px}
+  .pic img{max-width:100%;max-height:100%;object-fit:contain}
   .shopbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
   .shopbar .sp{flex:1}
   .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
@@ -44,7 +44,6 @@
     <a class="btn" href="index.html">← Back to the pricing agent</a>
   </div>
 </header>
-<div class="demo">Demo store for a university project. Scent Lab is fictional; nothing here can be bought.</div>
 <section class="hero">
   <h2>Fragrances for every mood</h2>
   <p id="updated">Prices are set by the Scent Lab pricing agent and approved by the owner.</p>
@@ -93,7 +92,7 @@
         : p.now !== p.was ? `<span class="badge new">New price</span>` : "";
       const stock = p.stock === 0 ? `<span class="stock out">Out of stock</span>`
         : p.stock <= 6 ? `<span class="stock low">Only ${p.stock} left</span>` : `<span class="stock muted">In stock</span>`;
-      return `<div class="item"><div class="pic">${badge}${bottle(p)}</div><div class="info">
+      return `<div class="item"><div class="pic">${badge}<img src="images/${p.id}.jpg" alt="${esc(p.name)}" data-id="${p.id}" data-step="0" onerror="window.__imgFail(this)"><span class="fallback" hidden>${bottle(p)}</span></div><div class="info">
         <div class="ibrand">${esc(p.brand)}</div><div class="iname">${esc(p.name)}</div>
         <div class="imeta">${p.gender} · ${p.tier === "Luxury" ? "Luxury" : "Classic"}</div>${stock}
         <div class="iprice">${p.now} SAR${p.now < p.was ? `<s>${p.was} SAR</s>` : ""}</div></div></div>`;
@@ -102,6 +101,12 @@
   document.querySelectorAll(".sc").forEach(b => b.addEventListener("click", () => {
     document.querySelectorAll(".sc").forEach(x => x.classList.toggle("active", x === b)); render(b.dataset.g);
   }));
+  // Photos: images/P01.jpg (or .png / .webp). If there is no photo, the drawn bottle is shown.
+  window.__imgFail = function (img) {
+    const exts = ["png", "webp"], step = +img.dataset.step;
+    if (step < exts.length) { img.dataset.step = step + 1; img.src = `images/${img.dataset.id}.${exts[step]}`; return; }
+    const fb = img.nextElementSibling; if (fb) fb.hidden = false; img.remove();
+  };
   render("All");
 })();
 </script>
