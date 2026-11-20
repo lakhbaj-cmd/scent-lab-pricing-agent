@@ -7,7 +7,7 @@
 <meta name="description" content="A decision agent that recommends perfume prices and offers for Scent Lab, with what-if analysis and owner approval.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=4">
+<link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 <header class="top">
@@ -21,7 +21,7 @@
   <nav class="tabs" role="tablist">
     <button class="tab active" data-tab="dashboard">Dashboard</button>
     <button class="tab" data-tab="products">Products</button>
-    <button class="tab" data-tab="agent">Run agent</button>
+    <button class="tab" data-tab="agent">Agent</button>
     <button class="tab" data-tab="whatif">What-if</button>
     <button class="tab" data-tab="briefing">Weekly briefing</button>
     <button class="tab" data-tab="log">Decision log</button>
@@ -37,12 +37,13 @@
       <h2>How is Scent Lab doing, and which prices need attention?</h2>
       <p class="muted">Last 4 weeks (25 Oct – 21 Nov 2026). Sales and stock are simulated; competitor prices are real, from the latest price check.</p>
     </div>
+    <div class="answer" id="agentStatus">🤖 The agent is starting…</div>
     <div class="card tryit">
       <h3>Try it yourself (2 minutes)</h3>
       <ol>
-        <li><b>Run agent</b> → click <b>Check competitor prices</b> for the latest prices → <b>Run the agent</b> → read why it suggests each price → <b>Approve</b> a few.</li>
+        <li><b>Agent</b> → the agent has already checked competitor prices and reviewed every perfume. Read why it suggests each price → <b>Approve</b> a few.</li>
         <li><b>Open the store</b> (top right) → the approved prices and offers are now live in the shop.</li>
-        <li><b>Products</b> → change a competitor price (for example Faces drops Good Girl to 450) → run the agent again and watch it react.</li>
+        <li><b>Products</b> → type a new competitor price (for example Faces drops Good Girl to 450) → the agent re-runs by itself and reacts.</li>
         <li><b>What-if</b> → try a season, a cost increase or a goal seek.</li>
       </ol>
       <p class="muted" style="margin:0">Your changes are saved only in your browser. <b>Decision log → Reset demo</b> puts everything back.</p>
@@ -56,7 +57,7 @@
       <div class="card">
         <h3>Needs attention</h3>
         <ul class="attention" id="attention"></ul>
-        <button class="btn primary" data-goto="agent">Run the agent →</button>
+        <button class="btn primary" data-goto="agent">See the agent's suggestions →</button>
       </div>
     </div>
   </section>
@@ -67,8 +68,7 @@
       <h2>Products and competitor prices</h2>
       <p class="muted">16 perfumes. “—” means the competitor does not sell a comparable bottle. Green = cheapest in the market.</p>
     </div>
-    <div class="row"><button class="btn primary" data-check="#ckOutProd">🔍 Check competitor prices</button><span class="muted ckLast"></span></div>
-    <div id="ckOutProd"></div>
+    <p class="muted ckLast" style="margin-top:-8px"></p>
     <div class="filters">
       <label>Show <select id="fGender"><option>All</option><option>Women</option><option>Men</option><option>Unisex</option></select></label>
       <label>Tier <select id="fTier"><option>All</option><option>Mid</option><option>Luxury</option></select></label>
@@ -76,7 +76,7 @@
     <div class="tablewrap"><table id="ptable"></table></div>
     <div class="card inputs" style="margin-top:16px">
       <div style="flex-basis:100%"><h3 style="margin:0">Update a competitor price</h3>
-        <p class="muted" style="margin:.2rem 0 0">Saw a new price on a competitor's site? Type it here. The agent uses it the next time it runs.</p></div>
+        <p class="muted" style="margin:.2rem 0 0">Saw a new price on a competitor's site? Type it here and the agent re-runs by itself.</p></div>
       <label>Perfume<select id="cProd"></select></label>
       <label>Competitor<select id="cComp"><option>Golden Scent</option><option>Faces</option><option>Sephora</option></select></label>
       <label>New price (SAR)<input id="cPrice" type="number" min="1" step="1" style="width:130px"></label>
@@ -89,14 +89,10 @@
   <!-- AGENT -->
   <section id="agent" class="panel">
     <div class="head">
-      <h2>Run the pricing agent</h2>
-      <p class="muted">The agent reads the data, lists the options, picks one using the rules, and drafts the new price. <b>Nothing changes until you approve.</b></p>
+      <h2>This week's pricing decisions</h2>
+      <p class="muted">The agent works by itself: it checks competitor prices, reads sales, stock and costs, compares the options and drafts a price for every perfume. <b>The only thing left for you is to approve or reject.</b></p>
     </div>
-    <div class="row">
-      <button class="btn big" data-check="#ckOutAgent">🔍 Check competitor prices</button>
-      <button class="btn primary big" id="runBtn">▶ Run the agent</button>
-      <span class="muted"><span class="ckLast"></span> <span id="runInfo"></span></span>
-    </div>
+    <p class="muted"><span class="ckLast"></span> <span id="runInfo"></span></p>
     <div id="ckOutAgent"></div>
     <div class="summary" id="runSummary"></div>
     <div id="recs"></div>
@@ -188,8 +184,8 @@
 
 <footer class="foot">Scent Lab is a fictional shop made for a BAIS 400 course project. Not affiliated with any brand or retailer.</footer>
 
-<script src="data.js?v=4"></script>
-<script src="agent.js?v=4"></script>
-<script src="app.js?v=4"></script>
+<script src="data.js?v=5"></script>
+<script src="agent.js?v=5"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>

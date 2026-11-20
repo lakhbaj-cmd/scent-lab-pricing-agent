@@ -25,34 +25,51 @@
   // ---------- competitor price check ----------
   const CK_LABEL = () => `Last checked: ${niceDate(saved.check ? saved.check.date : "2026-11-19")}`;
   function paintCheckLabels() { document.querySelectorAll(".ckLast").forEach(e => (e.textContent = CK_LABEL())); }
-  async function checkPrices(outSel) {
-    const out = $(outSel);
-    out.innerHTML = `<div class="answer">Checking Golden Scent, Faces and Sephora…</div>`;
+  // The agent checks competitor prices by itself, then reviews every perfume. No button needed.
+  async function checkPrices() {
     let data;
     try { data = await (await fetch("price_checks.json?t=" + Date.now(), { cache: "no-store" })).json(); }
-    catch (e) { out.innerHTML = `<div class="answer">Could not reach the price data right now. The agent keeps using the prices from the last check. Try again in a minute.</div>`; return; }
+    catch (e) { return { ok: false, changes: [] }; }
     const latest = data.checks[data.checks.length - 1];
-    const before = products();
     const changes = [];
-    before.forEach(p => ["Golden Scent", "Faces", "Sephora"].forEach(c => {
+    products().forEach(p => ["Golden Scent", "Faces", "Sephora"].forEach(c => {
       const o = p.comp[c], n = latest.prices[p.id] ? latest.prices[p.id][c] : null;
       if (o !== n) changes.push({ name: p.name, c, o, n });
     }));
     saved.check = latest; saved.comp = {}; save(); paintCheckLabels();
+    return { ok: true, latest, changes };
+  }
+  function activityHtml(res, recs) {
+    const time = new Date().toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+    const sugg = recs.filter(r => r.newPrice !== r.oldPrice && !r.dataIssue).length;
+    const review = recs.filter(r => r.needsReview).length;
     const fmtP = v => v == null ? "not sold" : v + " SAR";
-    const rows = changes.map(x => {
+    const rows = res.changes.map(x => {
       const pct = x.o != null && x.n != null ? Math.round((x.n - x.o) / x.o * 100) : null;
       return `<tr><td><b>${esc(x.name)}</b></td><td>${x.c}</td><td class="num">${fmtP(x.o)}</td><td class="num"><b>${fmtP(x.n)}</b></td>
         <td class="num ${pct == null ? "" : pct < 0 ? "down" : "up"}">${pct == null ? "—" : (pct > 0 ? "+" : "") + pct + "%"}</td></tr>`;
     }).join("");
-    out.innerHTML = `<div class="answer"><b>Price check done</b> (prices from ${niceDate(latest.date)}, 16 perfumes × 3 sites).
-      ${changes.length ? `<b>${changes.length}</b> competitor price${changes.length > 1 ? "s" : ""} changed.` : "No competitor changed a price since the last check."}</div>
-      ${changes.length ? `<div class="tablewrap" style="margin-bottom:12px"><table><tr><th>Perfume</th><th>Competitor</th><th class="num">Before</th><th class="num">Now</th><th class="num">Change</th></tr>${rows}</table></div>` : ""}
-      <button class="btn primary ckRun">▶ Run the agent with these prices</button>`;
-    out.querySelector(".ckRun").addEventListener("click", () => { show("agent"); runAndRender(); });
+    return `<div class="answer"><b>🤖 The agent ran by itself at ${time}.</b>
+      <ol class="steps">
+        <li>${res.ok ? `Checked 48 competitor prices (16 perfumes × Golden Scent, Faces, Sephora; prices from ${niceDate(res.latest.date)}): <b>${res.changes.length ? res.changes.length + " changed" : "no changes since the last check"}</b>.` : "Could not reach the price data, so it used the prices from the last check."}</li>
+        <li>Reviewed all 16 perfumes against the pricing rules.</li>
+        <li>Prepared <b>${sugg} price suggestion${sugg === 1 ? "" : "s"}</b>${review ? `, ${review} flagged for your review` : ""}. <b>Your part: approve or reject below.</b></li>
+      </ol></div>
+      ${res.changes.length ? `<details style="margin-bottom:14px"><summary style="padding:0 0 8px">See the ${res.changes.length} competitor price change${res.changes.length > 1 ? "s" : ""}</summary>
+        <div class="tablewrap"><table><tr><th>Perfume</th><th>Competitor</th><th class="num">Before</th><th class="num">Now</th><th class="num">Change</th></tr>${rows}</table></div></details>` : ""}`;
+  }
+  async function autoRun() {
+    $("#ckOutAgent").innerHTML = `<div class="answer">🤖 The agent is checking competitor prices…</div>`;
+    const res = await checkPrices();
+    runAndRender();
+    $("#ckOutAgent").innerHTML = activityHtml(res, currentRecs);
+    const sugg = currentRecs.filter(r => r.newPrice !== r.oldPrice && !r.dataIssue).length;
+    $("#agentStatus").innerHTML = `🤖 <b>The agent already ran today:</b> it checked competitor prices${res.changes.length ? ` (${res.changes.length} changed)` : ""} and has <b>${sugg} price suggestions</b> waiting for your approval.
+      <button class="btn primary" style="margin-left:8px" data-goto3="agent">Review them →</button>`;
+    $("#agentStatus [data-goto3]").addEventListener("click", () => show("agent"));
+    renderDashboard();
     if ($("#products").classList.contains("active")) renderProducts();
   }
-  document.querySelectorAll("[data-check]").forEach(b => b.addEventListener("click", () => checkPrices(b.dataset.check)));
 
   // ---------- tabs ----------
   function show(tab) {
@@ -149,7 +166,8 @@
     const n = v === "" ? null : Number(v);
     if (n !== null && (!isFinite(n) || n <= 0)) { $("#cMsg").textContent = "Please type a price above 0, or leave it empty for “not sold”."; return; }
     saved.comp = saved.comp || {}; saved.comp[id] = Object.assign({}, saved.comp[id], { [c]: n }); save();
-    $("#cMsg").textContent = `Saved: ${c} now ${n === null ? "does not sell it" : "sells it for " + n + " SAR"}. Run the agent again to see its new advice.`;
+    runAndRender();
+    $("#cMsg").innerHTML = `Saved: ${c} now ${n === null ? "does not sell it" : "sells it for " + n + " SAR"}. <b>The agent already re-ran with this price</b>, see the Agent tab.`;
     renderProducts();
   });
   $("#cUndo").addEventListener("click", () => { saved.comp = {}; save(); showCurrent(); renderProducts(); $("#cMsg").textContent = "Your typed prices are removed. The agent uses the prices from the last price check again."; });
@@ -219,7 +237,6 @@
       if (st) st.textContent = ok ? `Approved: price is now ${r.newPrice} SAR` : "Rejected: price stays the same";
     }
   }
-  $("#runBtn").addEventListener("click", runAndRender);
   $("#recs").addEventListener("click", e => {
     const a = e.target.closest("[data-approve]"), rj = e.target.closest("[data-reject]");
     if (a) decide(a.dataset.approve, true);
@@ -334,11 +351,12 @@
   }
   $("#resetBtn").addEventListener("click", () => {
     if (!confirm("Reset all approved prices and clear the log?")) return;
-    saved = { prices: {}, log: [], comp: {}, meta: {}, check: null }; save(); renderLog(); paintCheckLabels();
+    saved = { prices: {}, log: [], comp: {}, meta: {}, check: null }; save(); renderLog(); paintCheckLabels(); autoRun();
   });
 
   // ---------- start ----------
   paintCheckLabels();
   renderDashboard();
   setScenario("comp");
+  autoRun();   // the agent runs by itself as soon as the page opens
 })();
